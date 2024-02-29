@@ -7,6 +7,7 @@ import sage.arith.misc as arith
 
 import webbrowser
 from functools import reduce
+from math import inf
 from typing import List
 from itertools import islice
 
@@ -199,6 +200,7 @@ class A000012(OEISSequence):
 
 # TODO: A000014
 
+
 class A000019(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -208,6 +210,119 @@ class A000019(OEISSequence):
             description="Number of primitive permutation groups of degree n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         from sage.libs.gap.libgap import libgap
         return 1 if n == 1 else Integer(libgap.NrPrimitiveGroups(n))
+
+
+class A000029(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=29,
+            description="Number of necklaces with n beads of 2 colors, allowing turning over (these are also called bracelets).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        if n == 0:
+            return 1
+        else:
+            return sum([
+                (arith.euler_phi(d) * pow(2, n/d)) / (2*n)
+                for d in arith.divisors(n)
+            ]) + (pow(2, (n-1)//2) if n % 2 == 1 else (pow(2, n//2-1) + pow(2, n//2 - 2)))
+
+
+class A000031(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=31,
+            description="Number of n-bead necklaces with 2 colors when turning over is not allowed; also number of output sequences from a simple n-stage cycling shift register; also number of binary irreducible polynomials whose degree divides n.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        if n == 0:
+            return 1
+        else:
+            return sum([arith.euler_phi(d) * pow(2, n/d) for d in arith.divisors(n)]) // n
+
+class A000032(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=32,
+            description="Lucas numbers beginning at 2: L(n) = L(n-1) + L(n-2), L(0) = 2, L(1) = 1.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List[Integer]:
+        seq = [2,1]
+        while len(seq) < n:
+            seq.append(seq[-1] + seq[-2])
+        return seq[:n]
+    
+class A000035(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=35,
+            description="Period 2: repeat [0, 1]; a(n) = n mod 2; parity of n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return n%2
+
+    
+class A000040(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=40,
+            description="The prime numbers.",
+            all_at_once=True,
+        )
+    def _eval_up_to_n(self, n: Integer) -> List[Integer]:
+        return arith.primes_first_n(n)
+    
+class A000041(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            seq_number=41,
+            offset=0,
+            description="a(n) is the number of partitions of n (the partition numbers).",
+            all_at_once=False,
+        )
+    def _eval(self, n: Integer) -> Integer:
+        from sage.combinat.partition import Partitions
+        return Partitions(n).cardinality()
+    
+class A000043(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            seq_number=43,
+            offset=1,
+            description="Mersenne exponents: primes p such that 2^p - 1 is prime. Then 2^p - 1 is called a Mersenne prime.",
+            all_at_once=True
+        )
+        self.cached = cached
+    def _eval_up_to_n(self, n: Integer) -> List[Integer]:
+        if self.cached:
+            SEQ_TERMS = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279, 2203, 2281, 3217, 4253, 4423, 9689, 9941, 11213, 19937, 21701, 23209, 44497, 86243, 110503, 132049, 216091, 756839, 859433, 1257787, 1398269, 2976221, 3021377, 6972593, 13466917, 20996011, 24036583, 25964951, 30402457, 32582657, 37156667, 42643801, 43112609, 57885161]
+            return [Integer(i) for i in SEQ_TERMS[:n]]
+        else:
+            seq = []
+            for p in arith.primes(1, inf):
+                if arith.is_prime(pow(2, p) - 1):
+                    seq.append(p)
+                if len(seq) == n:
+                    return seq
