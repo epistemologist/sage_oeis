@@ -9,7 +9,7 @@ import webbrowser
 from functools import reduce
 from math import inf
 from typing import List
-from itertools import islice
+from itertools import islice, count
 
 
 class OEISSequence(SageObject):
@@ -422,3 +422,32 @@ class A000058(OEISSequence):
         while len(seq) < n:
             seq.append(seq[-1]**2 - seq[-1] + 1)
         return [Integer(i) for i in seq[:n]]
+
+class A000069(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=69,
+            description="Odious numbers: numbers with an odd number of 1's in their binary expansion.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = []
+        for i in count(1):
+            if bin(i).count('1') % 2 == 1:
+                seq.append(i)
+            if len(seq) >= n: break
+        return [Integer(i) for i in seq][:n]
+    
+class A000079(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            seq_number=79,
+            offset=0,
+            description="Powers of 2: a(n) = 2^n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(1 << n)

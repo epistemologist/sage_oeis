@@ -14,7 +14,7 @@ SEQUENCE_DATA = {
 
 IMPLEMENTED_SEQUENCES = [ i for i in dir(sloane_sequence) if re.match("A[0-9]{6}", i)]
 
-for seq in IMPLEMENTED_SEQUENCES:
+for seq in sorted(IMPLEMENTED_SEQUENCES):
     seq_obj = getattr(sloane_sequence, seq)()
     actual_sequence = SEQUENCE_DATA[seq]
     implemented_sequence = seq_obj._eval_up_to_n(len(actual_sequence))
@@ -23,4 +23,6 @@ for seq in IMPLEMENTED_SEQUENCES:
         for i, (implemented, actual) in enumerate(zip(implemented_sequence, actual_sequence)):
             if implemented != actual:
                 raise ValueError(f"{seq}({seq_obj.offset + i}) != {implemented}, should be {actual}")
+    else:
+        print(f"[✓] {seq}")
     # print(seq, actual_sequence, implemented_sequence)
