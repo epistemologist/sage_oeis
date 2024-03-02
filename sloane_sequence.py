@@ -18,6 +18,7 @@ Sequences to implement:
  - A000109: Number of simplicial polyhedra with n vertices; simple planar graphs with n vertices and 3n-6 edges; maximal simple planar graphs with n vertices; planar triangulations with n vertices; triangulations of the sphere with n vertices; 3-connected cubic planar graphs on 2n-4 vertices.
  - A000609: Number of threshold functions of n or fewer variables.
  - A000612: Number of P-equivalence classes of switching functions of n or fewer variables, divided by 2.
+ - A000798: Number of different quasi-orders (or topologies, or transitive digraphs) with n labeled elements.
 """
 
 
@@ -176,8 +177,7 @@ class A000009(OEISSequence):
         from sage.all import PolynomialRing, ZZ
         R = PolynomialRing(ZZ, names=('x',))
         (x,) = R.gens()
-        product = reduce(lambda x, y: x*y, [1 + x**i for i in range(1, n+1)])
-        return product.coefficients()[::-1][:n]
+        return arith.prod([1 + x**i for i in range(1, n+1)]).coefficients()[::-1][:n]
 
 
 class A000010(OEISSequence):
@@ -678,7 +678,7 @@ class A000140(OEISSequence):
         from sage.all import PolynomialRing, ZZ
         R = PolynomialRing(ZZ, names=('x',))
         (x,) = R.gens()
-        return max(reduce(lambda a, b: a*b, [sum([x**j for j in range(i+1)]) for i in range(n)]).coefficients())
+        return max(arith.prod([sum([x**j for j in range(i+1)]) for i in range(n)]).coefficients())
 
 
 class A000142(OEISSequence):
@@ -1201,3 +1201,127 @@ class A000602(OEISSequence):
             )
             result = re.findall(b">Z ([0-9]+) trees generated", proc.stderr)
             return Integer(result[0])
+
+class A000670(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=670,
+            description="Fubini numbers: number of preferential arrangements of n labeled elements; or number of weak orders on n labeled elements; or number of ordered partitions of [n].",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Using recurrence
+        # a(n) = Sum_{k=1..n} binomial(n, k)*a(n-k), a(0) = 1.
+        # a(k) = Sum_{j=1..k} binomial(k, j)*a(k-j), a(0) = 1.
+        from sage.functions.other import binomial as C
+        a = [1]
+        for k in range(1,n+1):
+            a.append(sum([a[k-j]*C(k,j) for j in range(1, k+1)]))
+        return [Integer(i) for i in a[:n]]
+
+
+class A000688(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=688,
+            description="Number of Abelian groups of order n; number of factorizations of n into prime powers.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        from sage.combinat.partition import Partitions
+        return arith.prod(Partitions(i).cardinality() for i in dict(arith.factor(n)).values())
+
+class A000720(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=720,
+            description="pi(n), the number of primes <= n. Sometimes called PrimePi(n) to distinguish it from the number 3.14159...",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        from sage.functions.prime_pi import prime_pi
+        return Integer(prime_pi(n))
+    
+class A000793(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=793,
+            description="Landau's function g(n): largest order of permutation of n elements. Equivalently, largest LCM of partitions of n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        from sage.arith.functions import lcm
+        from sage.combinat.partition import Partitions
+        return max(lcm(l) for l in Partitions(n))
+        
+class A000796(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=796,
+            description="Decimal expansion of Pi (or digits of Pi).",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        from sage.all import pi
+        return [Integer(i) for i in str(pi.n(digits=n+10)) if i in "0123456789"][:n]
+    
+class A000959(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=959,
+            description="Lucky numbers.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        if n > 200000:
+            raise ValueError("n too large")
+        # Code from Robert FERREOL from OEIS page
+        L = list(range(1, max(n*n, 10**6), 2))
+        j = 1
+        while j <= len(L) - 1 and L[j] <= len(L):
+            del L[L[j]-1::L[j]]
+            j += 1
+        return [Integer(i) for i in L[:n]]
+
+class A000961(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=961,
+            description="Powers of primes. Alternatively, 1 and the prime powers (p^k, p prime, k >= 1).",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = []
+        for i in count(1):
+            if i == 1 or Integer(i).is_prime_power():
+                seq.append(i)
+            if len(seq) == n:
+                return [Integer(i) for i in seq][:n]
+
+class A000984(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=984,
+            description="Central binomial coefficients: binomial(2*n,n) = (2*n)!/(n!)^2.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        from sage.functions.other import binomial as C
+        return Integer(C(2*n, n))
