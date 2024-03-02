@@ -11,6 +11,13 @@ from math import inf
 from typing import List
 from itertools import islice, count
 
+"""
+Sequences to implement:
+ - A000014: Number of series-reduced trees with n nodes.
+ - A000105: Number of free polyominoes (or square animals) with n cells.
+ - A000109: Number of simplicial polyhedra with n vertices; simple planar graphs with n vertices and 3n-6 edges; maximal simple planar graphs with n vertices; planar triangulations with n vertices; triangulations of the sphere with n vertices; 3-connected cubic planar graphs on 2n-4 vertices.
+"""
+
 
 class OEISSequence(SageObject):
     def __init__(self,
@@ -198,8 +205,6 @@ class A000012(OEISSequence):
     def _eval(self, n: Integer) -> Integer:
         return Integer(1)
 
-# TODO: A000014
-
 
 class A000019(OEISSequence):
     def __init__(self):
@@ -380,13 +385,15 @@ class A000081(OEISSequence):
             description="Number of unlabeled rooted trees with n nodes (or connected functions with a fixed point).",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List[Integer]:
         # Adapted from "The Art of Computer Programming" Vol 1 2.3.4.4 Exercise 2
-        a = [0,1]
-        s = lambda n,k: sum([a[n+1-j*k] for j in range(1, n//k+1)])
+        a = [0, 1]
+        def s(n, k): return sum([a[n+1-j*k] for j in range(1, n//k+1)])
         for n_ in range(1, n):
             a.append(sum([i * a[i] * s(n_, i) for i in range(1, n_+1)]) // n_)
         return [Integer(i) for i in a][:n]
+
 
 class A000055(OEISSequence):
     def __init__(self):
@@ -397,17 +404,19 @@ class A000055(OEISSequence):
             description="Number of trees with n unlabeled nodes.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List[Integer]:
-        # Use the generating function relation 
-        # A(x) = 1 + T(x) - T(x)^2 / 2 + T(x^2) / 2, where T(x) is the g.f. of A000081 
+        # Use the generating function relation
+        # A(x) = 1 + T(x) - T(x)^2 / 2 + T(x^2) / 2, where T(x) is the g.f. of A000081
         terms = A000081()._eval_up_to_n(50)
         from sage.all import PolynomialRing, ZZ
         R = PolynomialRing(ZZ, names=('x',))
         (x,) = R.gens()
-        T = sum([a*x**i for i, a in enumerate(terms) ] )
+        T = sum([a*x**i for i, a in enumerate(terms)])
         A = 1 + T - (T*T)/2 + T.subs({x: x*x})/2
         return [Integer(i) for i in A.coefficients()[:n]]
-    
+
+
 class A000058(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -417,11 +426,13 @@ class A000058(OEISSequence):
             description="Sylvester's sequence: a(n+1) = a(n)^2 - a(n) + 1, with a(0) = 2.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         seq = [2]
         while len(seq) < n:
             seq.append(seq[-1]**2 - seq[-1] + 1)
         return [Integer(i) for i in seq[:n]]
+
 
 class A000069(OEISSequence):
     def __init__(self):
@@ -432,14 +443,17 @@ class A000069(OEISSequence):
             description="Odious numbers: numbers with an odd number of 1's in their binary expansion.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         seq = []
         for i in count(1):
             if bin(i).count('1') % 2 == 1:
                 seq.append(i)
-            if len(seq) >= n: break
+            if len(seq) >= n:
+                break
         return [Integer(i) for i in seq][:n]
-    
+
+
 class A000079(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -449,5 +463,417 @@ class A000079(OEISSequence):
             description="Powers of 2: a(n) = 2^n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(1 << n)
+
+
+class A000085(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            seq_number=85,
+            offset=0,
+            description="Number of self-inverse permutations on n letters, also known as involutions; number of standard Young tableaux with n cells.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        # Original code from Jaap Spies (2007-02-03)
+        return sum(arith.factorial(n) // (arith.factorial(n-2*k) * (2**k) * arith.factorial(k)) for k in range(n//2+1))
+
+
+class A000088(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            seq_number=88,
+            offset=0,
+            description="Number of graphs on n unlabeled nodes.",
+            all_at_once=False
+        )
+        self.cached = cached
+        self.SEQ_TERMS = [1, 1, 2, 4, 11, 34, 156, 1044, 12346, 274668, 12005168,
+                          1018997864, 165091172592, 50502031367952,
+                          29054155657235488, 31426485969804308768,
+                          64001015704527557894928,
+                          245935864153532932683719776,
+                          1787577725145611700547878190848,
+                          24637809253125004524383007491432768]
+
+    def _eval(self, n: Integer) -> Integer:
+        if self.cached:
+            return Integer(self.SEQ_TERMS[n])
+        else:
+            # Use nauty-geng to count number of graphs on n nodes
+            # On my machine, this is impractical for any n > 10
+
+            # Code modified from https://github.com/sagemath/sage/blob/develop/src/sage/graphs/graph_generators.py
+            from sage.features.nauty import NautyExecutable
+            import subprocess
+            import re
+
+            geng_path = NautyExecutable("geng").absolute_filename()
+            proc = subprocess.run(
+                f"{geng_path} -u {n}".split(),
+                capture_output=True
+            )
+            result = re.findall(b">Z ([0-9]+) graphs generated", proc.stderr)
+            return Integer(result[0])
+
+
+class A000108(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=108,
+            description="Catalan numbers: C(n) = binomial(2n,n)/(n+1) = (2n)!/(n!(n+1)!).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        from sage.combinat.combinat import catalan_number
+        return catalan_number(n)
+
+
+class A000110(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=110,
+            description="Bell or exponential numbers: number of ways to partition a set of n labeled elements.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        from sage.combinat.combinat import bell_number
+        return bell_number(n)
+
+
+class A000111(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=111,
+            description="Euler or up/down numbers: e.g.f. sec(x) + tan(x). Also for n >= 2, half the number of alternating permutations on n letters (A001250).",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List[Integer]:
+        # We calculate terms using the recurrence
+        # a(0) = a(1) = 1
+        # a(n) = a(n) = Sum_{i = 0..n-2} binomial(n-2,i)*a(i)*a(n-1-i)
+        from sage.functions.other import binomial as C
+        a = [1, 1]
+        while len(a) < n:
+            n_ = len(a)
+            a.append(sum([C(n_-2, i)*a[i]*a[n_-1-i] for i in range(n_-1)]))
+        return [Integer(i) for i in a[:n]]
+
+
+class A000112(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=112,
+            description="Number of partially ordered sets (\"posets\") with n unlabeled elements.",
+            all_at_once=False
+        )
+        self.cached = cached
+        self.SEQ_TERMS = [1, 1, 2, 5, 16, 63, 318, 2045, 16999, 183231, 2567284,
+                          46749427, 1104891746, 33823827452, 1338193159771,
+                          68275077901156, 4483130665195087]
+
+    def _eval(self, n: Integer) -> Integer:
+        if self.cached:
+            return Integer(self.SEQ_TERMS[n])
+        else:
+            from sage.combinat.posets.posets import FinitePosets_n
+            return len(FinitePosets_n(n))
+
+
+class A000120(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=120,
+            description="1's-counting sequence: number of 1's in binary expansion of n (or the binary weight of n).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(n).popcount()
+
+
+class A000123(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=123,
+            description="Number of binary partitions: number of partitions of 2n into powers of 2.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Using the recurrence
+        # a(n) = a(n-1) + a(n//2)
+        a = [1]
+        for i in range(1, n):
+            a.append(a[i-1]+a[i//2])
+        return [Integer(i) for i in a]
+
+
+class A000124(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=124,
+            description="Central polygonal numbers (the Lazy Caterer's sequence): n(n+1)/2 + 1; or, maximal number of pieces formed when slicing a pancake with n cuts.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer((n*(n+1))//2 + 1)
+
+
+class A000129(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=129,
+            description="Pell numbers: a(0) = 0, a(1) = 1; for n > 1, a(n) = 2*a(n-1) + a(n-2).",
+            all_at_once=True,
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        a = [0, 1]
+        for i in range(2, n):
+            a.append(2*a[i-1]+a[i-2])
+        return [Integer(i) for i in a[:n]]
+
+
+class A000140(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=140,
+            description="Kendall-Mann numbers: the most common number of inversions in a permutation on n letters is floor(n*(n-1)/4); a(n) is the number of permutations with this many inversions.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        # Using formula due to David W. Wilson
+        # Largest coefficient of (1)(x+1)(x^2+x+1)...(x^(n-1) + ... + x + 1)
+        from sage.all import PolynomialRing, ZZ
+        R = PolynomialRing(ZZ, names=('x',))
+        (x,) = R.gens()
+        return max(reduce(lambda a, b: a*b, [sum([x**j for j in range(i+1)]) for i in range(n)]).coefficients())
+
+
+class A000142(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=142,
+            description="Factorial numbers: n! = 1*2*3*4*...*n (order of symmetric group S_n, number of permutations of n letters).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        from sage.functions.other import factorial
+        return factorial(n)
+
+
+class A000161(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=161,
+            description="Number of partitions of n into 2 squares.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        # See comment by Ant King
+        def f(n): return sum([
+            1 if d % 4 == 1 else -1 if d % 4 == 3 else 0
+            for d in arith.divisors(n)
+        ])
+        def delta(n): return 1 if Integer(n).is_square() else 0
+        # a(n)=1/2 (f(n)+delta(n)+delta(1/2 n))
+        return 1 if n == 0 else (f(n) + delta(n) + delta(n // 2))//2
+
+
+class A000166(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=166,
+            description="Subfactorial or rencontres numbers, or derangements: number of permutations of n elements with no fixed points.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Using recurrence
+        # a(n) = n*a(n-1) + (-1)^n
+        a = [1]
+        for i in range(1, n):
+            a.append(i*a[-1] + pow(-1, i))
+        return [Integer(i) for i in a[:n]]
+
+
+class A000169(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=169,
+            description="Number of labeled rooted trees with n nodes: n^(n-1).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(pow(n, n-1))
+
+
+class A000182(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=182,
+            description="Tangent (or \"Zag\") numbers: e.g.f. tan(x), also (up to signs) e.g.f. tanh(x).",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Using implementation from Peter Luschny
+        T = [0, 1] + [0] * (n-1)
+        for k in range(2, n+1):
+            T[k] = (k-1)*T[k-1]
+        for k in range(2, n+1):
+            for j in range(k, n+1):
+                T[j] = (j-k)*T[j-1]+(j-k+2)*T[j]
+        return [Integer(i) for i in T[1:]]
+
+
+class A000203(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=203,
+            description="a(n) = sigma(n), the sum of the divisors of n. Also called sigma_1(n).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return arith.sigma(n, 1)
+
+
+class A000204(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=204,
+            description="Lucas numbers (beginning with 1): L(n) = L(n-1) + L(n-2) with L(1) = 1, L(2) = 3.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = [1, 3]
+        while len(seq) < n:
+            seq.append(seq[-1] + seq[-2])
+        return [Integer(i) for i in seq[:n]]
+
+
+class A000217(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=217,
+            description="Triangular numbers: a(n) = binomial(n+1,2) = n*(n+1)/2 = 0 + 1 + 2 + ... + n.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer((n*(n+1))//2)
+
+
+class A000219(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=219,
+            description="Number of planar partitions (or plane partitions) of n.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Using the recurrence
+        # a(n) = (1/n) * Sum_{k=1..n} a(n-k)*sigma_2(k), n > 0, a(0)=1
+        # From Vladeta Jovovic
+        a = [1]
+        for n_ in range(1, n+1):
+            an = sum([a[n_-k]*arith.sigma(k, 2) for k in range(1, n_+1)])//n_
+            a.append(an)
+        return [Integer(i) for i in a[:n]]
+
+
+class A000225(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=225,
+            description="a(n) = 2^n - 1. (Sometimes called Mersenne numbers, although that name is usually reserved for A001348.)",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer((1 << n)-1)
+
+
+class A000244(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=225,
+            description="Powers of 3: a(n) = 3^n.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(3**n)
+
+class A000262(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=262,
+            description="Number of \"sets of lists\": number of partitions of {1,...,n} into any number of lists, where a list means an ordered subset.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Using fact that sequence is D-finite 
+        a = [1,1]
+        for k in range(2, n+1):
+            a.append((2*k-1)*a[k-1] - (k-1)*(k-2)*a[k-2])
+        return [Integer(i) for i in a[:n]]
