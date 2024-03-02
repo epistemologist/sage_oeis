@@ -16,6 +16,8 @@ Sequences to implement:
  - A000014: Number of series-reduced trees with n nodes.
  - A000105: Number of free polyominoes (or square animals) with n cells.
  - A000109: Number of simplicial polyhedra with n vertices; simple planar graphs with n vertices and 3n-6 edges; maximal simple planar graphs with n vertices; planar triangulations with n vertices; triangulations of the sphere with n vertices; 3-connected cubic planar graphs on 2n-4 vertices.
+ - A000609: Number of threshold functions of n or fewer variables.
+ - A000612: Number of P-equivalence classes of switching functions of n or fewer variables, divided by 2.
 """
 
 
@@ -947,6 +949,7 @@ class A000273(OEISSequence):
                 b"([0-9]+) digraphs generated", s)] for s in output], [])
             return res[0]
 
+
 class A000290(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -956,8 +959,10 @@ class A000290(OEISSequence):
             description="The squares: a(n) = n^2.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(n*n)
+
 
 class A000292(OEISSequence):
     def __init__(self):
@@ -968,9 +973,11 @@ class A000292(OEISSequence):
             description="Tetrahedral (or triangular pyramidal) numbers: a(n) = C(n+2,3) = n*(n+1)*(n+2)/6.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer((n*(n+1)*(n+2))//6)
-    
+
+
 class A000302(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -980,8 +987,10 @@ class A000302(OEISSequence):
             description="Powers of 4: a(n) = 4^n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
-        return Integer(pow(4,n))
+        return Integer(pow(4, n))
+
 
 class A000311(OEISSequence):
     def __init__(self):
@@ -992,10 +1001,203 @@ class A000311(OEISSequence):
             description="Schroeder's fourth problem; also series-reduced rooted trees with n labeled leaves; also number of total partitions of n.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         # From given recurrence
         from sage.functions.other import binomial as C
-        a = [0,1,1]
+        a = [0, 1, 1]
         for k in range(2, n+1):
-            a.append((k+2)*a[k] + 2*sum([ C(k,j)*a[j]*a[k-j+1] for j in range(2, k)] ))
+            a.append((k+2)*a[k] + 2*sum([C(k, j)*a[j]*a[k-j+1]
+                     for j in range(2, k)]))
         return [Integer(i) for i in a[:n]]
+
+
+class A000312(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=312,
+            description="a(n) = n^n; number of labeled mappings from n points to themselves (endofunctions).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(pow(n, n))
+
+
+class A000326(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=326,
+            description="Pentagonal numbers: a(n) = n*(3*n-1)/2.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer((n*(3*n-1)//2))
+
+
+class A000330(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=330,
+            description="Square pyramidal numbers: a(n) = 0^2 + 1^2 + 2^2 + ... + n^2 = n*(n+1)*(2*n+1)/6.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer((n*(n+1)*(2*n+1))//6)
+
+
+class A000364(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=364,
+            description="Euler (or secant or \"Zig\") numbers: e.g.f. (even powers only) sec(x) = 1/cos(x).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        from sage.combinat.combinat import euler_number
+        return Integer(abs(euler_number(2*n)))
+
+
+class A000396(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=396,
+            description="Perfect numbers k: k is equal to the sum of the proper divisors of k.",
+            all_at_once=True
+        )
+        self.cached = cached
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        if self.cached:
+            return [Integer(pow(2, p-1)*(pow(2, p)-1)) for p in A000043()._eval_up_to_n(n)]
+        else:
+            # Note that the given terms are the only known perfect numbers
+            # so the given code below is only for completeness
+            seq = []
+            for k in count(1):
+                if arith.sigma(k, 1) == 2*k:
+                    seq.append(k)
+                if len(seq) == n:
+                    return [Integer(i) for i in seq]
+
+
+class A000521(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=521,
+            description="Coefficients of modular function j as power series in q = e^(2 Pi i t). Another name is the elliptic modular invariant J(tau).",
+            all_at_once=True,
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        from sage.modular.modform.j_invariant import j_invariant_qexp
+        coeffs = j_invariant_qexp(n).coefficients()
+        return [Integer(i) for i in coeffs[:n]]
+
+
+class A000578(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=578,
+            description="The cubes: a(n) = n^3.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(pow(n, 3))
+
+
+class A000583(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=583,
+            description="Fourth powers: a(n) = n^4.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(pow(n, 4))
+
+
+class A000593(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=593,
+            description="Sum of odd divisors of n.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(sum([d for d in arith.divisors(n) if d % 2 == 1]))
+
+
+class A000594(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=594,
+            description="Ramanujan's tau function (or Ramanujan numbers, or tau numbers).",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        from sage.modular.modform.vm_basis import delta_qexp
+        return [Integer(i) for i in list(delta_qexp(n+1))[1:]]
+
+
+class A000602(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=602,
+            description="Number of n-node unrooted quartic trees; number of n-carbon alkanes C(n)H(2n+2) ignoring stereoisomers.",
+            all_at_once=False
+        )
+        self.cached = cached
+        self.SEQ_TERMS = [1, 1, 1, 1, 2, 3, 5, 9, 18, 35, 75, 159, 355, 802, 1858, 4347,
+                          10359, 24894, 60523, 148284, 366319, 910726, 2278658,
+                          5731580, 14490245, 36797588, 93839412, 240215803,
+                          617105614, 1590507121, 4111846763, 10660307791,
+                          27711253769]
+
+    def _eval(self, n: Integer) -> Integer:
+        if self.cached:
+            return Integer(self.SEQ_TERMS[n])
+        else:
+            if n == 0:
+                return 1
+            # Use the nauty-gentreeg to enumerate trees
+            from sage.features.nauty import NautyExecutable
+            import subprocess
+            import re
+
+            geng_path = NautyExecutable("gentreeg").absolute_filename()
+            proc = subprocess.run(
+                f"{geng_path} {n} -u -D4".split(),
+                capture_output=True
+            )
+            result = re.findall(b">Z ([0-9]+) trees generated", proc.stderr)
+            return Integer(result[0])
