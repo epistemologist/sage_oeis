@@ -862,6 +862,7 @@ class A000244(OEISSequence):
     def _eval(self, n: Integer) -> Integer:
         return Integer(3**n)
 
+
 class A000262(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -871,9 +872,130 @@ class A000262(OEISSequence):
             description="Number of \"sets of lists\": number of partitions of {1,...,n} into any number of lists, where a list means an ordered subset.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
-        # Using fact that sequence is D-finite 
-        a = [1,1]
+        # Using fact that sequence is D-finite
+        a = [1, 1]
         for k in range(2, n+1):
             a.append((2*k-1)*a[k-1] - (k-1)*(k-2)*a[k-2])
+        return [Integer(i) for i in a[:n]]
+
+
+class A000272(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=272,
+            description="Number of trees on n labeled nodes: n^(n-2) with a(0)=1.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(1) if n == 0 else Integer(pow(n, n-2))
+
+
+class A000273(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=273,
+            description="Number of unlabeled simple digraphs with n nodes.",
+            all_at_once=False,
+        )
+        self.cached = cached
+        self.SEQ_TERMS = [1, 1, 3, 16, 218, 9608, 1540944, 882033440,
+                          1793359192848, 13027956824399552,
+                          341260431952972580352, 32522909385055886111197440,
+                          11366745430825400574433894004224,
+                          14669085692712929869037096075316220928,
+                          70315656615234999521385506555979904091217920]
+
+    def _eval(self, n: Integer) -> Integer:
+        if self.cached:
+            return Integer(self.SEQ_TERMS[n])
+        else:
+            if n == 0:
+                return 1
+            # Use nauty to count digraphs
+            # This is impractical on my machine for any n > 6
+
+            # The equivalent shell command is
+            # nauty-geng {n} | nauty-directg -u
+
+            from sage.features.nauty import NautyExecutable
+            from subprocess import Popen, PIPE
+            import re
+
+            geng_path = NautyExecutable("geng").absolute_filename()
+            directg_path = NautyExecutable("directg").absolute_filename()
+
+            geng_proc = Popen(
+                f"{geng_path} {n}".split(),
+                stdout=PIPE,
+                stderr=PIPE
+            )
+            directg_proc = Popen(
+                f"{directg_path} -u".split(),
+                stdin=geng_proc.stdout,
+                stdout=PIPE,
+                stderr=PIPE
+            )
+            output = [i for i in directg_proc.communicate() if i]
+            res = sum([[Integer(i) for i in re.findall(
+                b"([0-9]+) digraphs generated", s)] for s in output], [])
+            return res[0]
+
+class A000290(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=290,
+            description="The squares: a(n) = n^2.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(n*n)
+
+class A000292(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=292,
+            description="Tetrahedral (or triangular pyramidal) numbers: a(n) = C(n+2,3) = n*(n+1)*(n+2)/6.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer((n*(n+1)*(n+2))//6)
+    
+class A000302(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=302,
+            description="Powers of 4: a(n) = 4^n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(pow(4,n))
+
+class A000311(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=311,
+            description="Schroeder's fourth problem; also series-reduced rooted trees with n labeled leaves; also number of total partitions of n.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # From given recurrence
+        from sage.functions.other import binomial as C
+        a = [0,1,1]
+        for k in range(2, n+1):
+            a.append((k+2)*a[k] + 2*sum([ C(k,j)*a[j]*a[k-j+1] for j in range(2, k)] ))
         return [Integer(i) for i in a[:n]]
