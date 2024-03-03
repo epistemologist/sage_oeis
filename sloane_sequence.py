@@ -2095,3 +2095,78 @@ class A002808(OEISSequence):
             if not arith.is_prime(i): seq.append(Integer(i))
             if len(seq) == n: return seq
 
+class A003094(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=3094,
+            description="Number of unlabeled connected planar simple graphs with n nodes.",
+            all_at_once=False
+        )
+        self.cached = cached
+        self.SEQ_TERMS = [1,1,1,2,6,20,99,646,5974,71885,1052805,17449299,313372298,5942258308]
+    def _eval(self, n: Integer) -> Integer:
+        if self.cached:
+            return Integer(self.SEQ_TERMS[n])
+        else:
+            # Using provided nauty program
+            #  geng -c $n | planarg -q | countg -q
+            if n == 0:
+                return 1
+            from sage.features.nauty import NautyExecutable
+            from subprocess import Popen, PIPE
+            import re
+            # NautyExecutable("geng").absolute_filename()
+            geng_proc = Popen(
+                f"{NautyExecutable('geng').absolute_filename()} -c {n}".split(),
+                stdout = PIPE,
+                stderr = PIPE
+            )
+            planarg_proc = Popen(
+                f"{NautyExecutable('planarg').absolute_filename()} -q".split(),
+                stdin = geng_proc.stdout,
+                stdout = PIPE,
+                stderr = PIPE
+            )
+            countg_proc = Popen(
+                f"{NautyExecutable('countg').absolute_filename()} -q".split(),
+                stdin=planarg_proc.stdout,
+                stdout=PIPE,
+                stderr=PIPE
+            )
+            output = countg_proc.communicate()[0]
+            return Integer( re.findall(b"([0-9]+) graphs", output)[0] )
+
+class A003136(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=3136,
+            description="Loeschian numbers: numbers of the form x^2 + xy + y^2; norms of vectors in A2 lattice.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def _is_ok(n):
+            for p, e in dict(arith.factor(n)).items():
+                if p%3==2 and e%2==1: return False
+            return True
+        seq = [0]
+        for i in count(1):
+            if _is_ok(i): seq.append(i)
+            if len(seq) == n: return [Integer(i) for i in seq]
+    
+class A003418(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=3418,
+            description="Least common multiple (or LCM) of {1, 2, ..., n} for n >= 1, a(0) = 1.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        from sage.arith.functions import lcm
+        return Integer(1) if n == 0 else Integer(lcm(range(1, n+1)))
+
