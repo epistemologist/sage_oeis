@@ -569,11 +569,11 @@ class A000111(OEISSequence):
         # We calculate terms using the recurrence
         # a(0) = a(1) = 1
         # a(n) = a(n) = Sum_{i = 0..n-2} binomial(n-2,i)*a(i)*a(n-1-i)
-        from sage.functions.other import binomial as C
         a = [1, 1]
         while len(a) < n:
             n_ = len(a)
-            a.append(sum([C(n_-2, i)*a[i]*a[n_-1-i] for i in range(n_-1)]))
+            a.append(sum([arith.binomial(n_-2, i)*a[i]*a[n_-1-i]
+                     for i in range(n_-1)]))
         return [Integer(i) for i in a[:n]]
 
 
@@ -1005,10 +1005,9 @@ class A000311(OEISSequence):
 
     def _eval_up_to_n(self, n: Integer) -> List:
         # From given recurrence
-        from sage.functions.other import binomial as C
         a = [0, 1, 1]
         for k in range(2, n+1):
-            a.append((k+2)*a[k] + 2*sum([C(k, j)*a[j]*a[k-j+1]
+            a.append((k+2)*a[k] + 2*sum([arith.binomial(k, j)*a[j]*a[k-j+1]
                      for j in range(2, k)]))
         return [Integer(i) for i in a[:n]]
 
@@ -1218,10 +1217,9 @@ class A000670(OEISSequence):
         # Using recurrence
         # a(n) = Sum_{k=1..n} binomial(n, k)*a(n-k), a(0) = 1.
         # a(k) = Sum_{j=1..k} binomial(k, j)*a(k-j), a(0) = 1.
-        from sage.functions.other import binomial as C
         a = [1]
         for k in range(1, n+1):
-            a.append(sum([a[k-j]*C(k, j) for j in range(1, k+1)]))
+            a.append(sum([a[k-j]*arith.binomial(k, j) for j in range(1, k+1)]))
         return [Integer(i) for i in a[:n]]
 
 
@@ -1338,8 +1336,7 @@ class A000984(OEISSequence):
         )
 
     def _eval(self, n: Integer) -> Integer:
-        from sage.functions.other import binomial as C
-        return Integer(C(2*n, n))
+        return Integer(arith.binomial(2*n, n))
 
 
 class A001003(OEISSequence):
@@ -1360,6 +1357,7 @@ class A001003(OEISSequence):
             a.append(((6*k-3)*a[k-1] - (k-2)*a[k-2]) // (k+1))
         return [Integer(i) for i in a[:n]]
 
+
 class A001006(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1369,12 +1367,14 @@ class A001006(OEISSequence):
             description="Motzkin numbers: number of ways of drawing any number of nonintersecting chords joining n (labeled) points on a circle.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         # Using recurrence (n+2)*a(n) = (2*n+1)*a(n-1) + (3*n-3)*a(n-2).
-        a = [1,1]
+        a = [1, 1]
         for k in range(2, n+1):
-            a.append( ( (2*k+1)*a[k-1] + (3*k-3)*a[k-2] ) // (k+2))
+            a.append(((2*k+1)*a[k-1] + (3*k-3)*a[k-2]) // (k+2))
         return [Integer(i) for i in a[:n]]
+
 
 class A001037(OEISSequence):
     def __init__(self):
@@ -1385,9 +1385,11 @@ class A001037(OEISSequence):
             description="Number of degree-n irreducible polynomials over GF(2); number of n-bead necklaces with beads of 2 colors when turning over is not allowed and with primitive period n; number of binary Lyndon words of length n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
-        return Integer(1) if n == 0 else Integer(sum([arith.moebius(n//d)*pow(2,d) for d in arith.divisors(n)])//n)
-    
+        return Integer(1) if n == 0 else Integer(sum([arith.moebius(n//d)*pow(2, d) for d in arith.divisors(n)])//n)
+
+
 class A001045(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1397,8 +1399,10 @@ class A001045(OEISSequence):
             description="Jacobsthal sequence (or Jacobsthal numbers): a(n) = a(n-1) + 2*a(n-2), with a(0) = 0, a(1) = 1; also a(n) = nearest integer to 2^n/3.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
-        return Integer( (pow(2,n)-(pow(-1,n)))//3 )
+        return Integer((pow(2, n)-(pow(-1, n)))//3)
+
 
 class A001055(OEISSequence):
     def __init__(self):
@@ -1409,14 +1413,18 @@ class A001055(OEISSequence):
             description="The multiplicative partition function: number of ways of factoring n with all factors greater than 1 (a(1) = 1 by convention).",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         # Translation of Python code provided on OEIS page
-        def T(n,m):
-            if arith.is_prime(n): return 1 if n<=m else 0
-            s = sum([T(n//d, d) for d in arith.divisors(n) if 1 < d <= min(m,n-1)])
-            return s + (1 if n<=m else 0)
-        return Integer(T(n,n))
-    
+        def T(n, m):
+            if arith.is_prime(n):
+                return 1 if n <= m else 0
+            s = sum([T(n//d, d)
+                    for d in arith.divisors(n) if 1 < d <= min(m, n-1)])
+            return s + (1 if n <= m else 0)
+        return Integer(T(n, n))
+
+
 class A001057(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1426,8 +1434,10 @@ class A001057(OEISSequence):
             description="Canonical enumeration of integers: interleaved positive and negative integers with zero prepended.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
-        return Integer( ( 1-(2*n+1)*(pow(-1,n)) ) // 4)
+        return Integer((1-(2*n+1)*(pow(-1, n))) // 4)
+
 
 class A001065(OEISSequence):
     def __init__(self):
@@ -1438,9 +1448,11 @@ class A001065(OEISSequence):
             description="Sum of proper divisors (or aliquot parts) of n: sum of divisors of n that are less than n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(arith.sigma(n, 1) - n)
-    
+
+
 class A001097(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1450,14 +1462,16 @@ class A001097(OEISSequence):
             description="Twin primes.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         seq = set()
         p, q = 2, 3
         while len(seq) < n:
-            if q - p == 2: 
-                seq |= {p,q}
+            if q - p == 2:
+                seq |= {p, q}
             p, q = q, arith.next_prime(q)
         return [Integer(i) for i in sorted(seq)]
+
 
 class A001113(OEISSequence):
     def __init__(self):
@@ -1468,10 +1482,12 @@ class A001113(OEISSequence):
             description="Decimal expansion of e.",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         from sage.all import e
         return [Integer(i) for i in str(e.n(digits=n+10)) if i in "0123456789"][:n]
-    
+
+
 class A001147(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1481,9 +1497,11 @@ class A001147(OEISSequence):
             description="Double factorial of odd numbers: a(n) = (2*n-1)!! = 1*3*5*...*(2*n-1).",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
-        return Integer(arith.rising_factorial(n+1,n)//pow(2, n))
-    
+        return Integer(arith.rising_factorial(n+1, n)//pow(2, n))
+
+
 class A001157(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1493,8 +1511,10 @@ class A001157(OEISSequence):
             description="a(n) = sigma_2(n): sum of squares of divisors of n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return arith.sigma(n, 2)
+
 
 class A001190(OEISSequence):
     def __init__(self):
@@ -1505,19 +1525,23 @@ class A001190(OEISSequence):
             description="Wedderburn-Etherington numbers: unlabeled binary rooted trees (every node has outdegree 0 or 2) with n endpoints (and 2n-1 nodes in all).",
             all_at_once=True
         )
+
     def _eval_up_to_n(self, n: Integer) -> List:
         # Use recurrence given
         # Use functools.cache instead of array for recurrence due to more complex nature of recurrence
         @cache
         def a(n):
-            if n == 0: return 0
-            if n == 1: return 1
-            m = n//2+(1 if n%2==1 else 0)
-            if n % 2 == 1: # n = 2*m-1
-                return sum([a(i)*a(2*m-1-i) for i in range(1,m)])
-            else: # n = 2*m
-                return sum([a(i)*a(2*m-i) for i in range(1,m)]) + (a(m)*(a(m)+1))//2
+            if n == 0:
+                return 0
+            if n == 1:
+                return 1
+            m = n//2+(1 if n % 2 == 1 else 0)
+            if n % 2 == 1:  # n = 2*m-1
+                return sum([a(i)*a(2*m-1-i) for i in range(1, m)])
+            else:  # n = 2*m
+                return sum([a(i)*a(2*m-i) for i in range(1, m)]) + (a(m)*(a(m)+1))//2
         return [Integer(a(i)) for i in range(n)]
+
 
 class A001221(OEISSequence):
     def __init__(self):
@@ -1528,9 +1552,11 @@ class A001221(OEISSequence):
             description="Number of distinct primes dividing n (also called omega(n)).",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(len(arith.prime_divisors(n)))
-    
+
+
 class A001222(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1540,8 +1566,10 @@ class A001222(OEISSequence):
             description="Number of prime divisors of n counted with multiplicity (also called big omega of n, bigomega(n) or Omega(n)).",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(sum(e for _, e in dict(arith.factor(n)).items()))
+
 
 class A001227(OEISSequence):
     def __init__(self):
@@ -1552,9 +1580,11 @@ class A001227(OEISSequence):
             description="Number of odd divisors of n.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(sum([1 for d in arith.divisors(n) if d % 2 == 1]))
-    
+
+
 class A001285(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -1564,5 +1594,110 @@ class A001285(OEISSequence):
             description="Thue-Morse sequence: let A_k denote the first 2^k terms; then A_0 = 1 and for k >= 0, A_{k+1} = A_k B_k, where B_k is obtained from A_k by interchanging 1's and 2's.",
             all_at_once=False
         )
+
     def _eval(self, n: Integer) -> Integer:
         return Integer(Integer(n).popcount() % 2 + 1)
+
+
+class A001333(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=1333,
+            description="Numerators of continued fraction convergents to sqrt(2).",
+            all_at_once=True,
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        a = [1, 1]
+        while len(a) < n:
+            a.append(2*a[-1] + a[-2])
+        return [Integer(i) for i in a][:n]
+
+
+class A001349(OEISSequence):
+    def __init__(self, cached=True):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=1349,
+            description="Number of connected graphs on n nodes.",
+            all_at_once=False
+        )
+        self.cached = cached
+        self.SEQ_TERMS = [1, 1, 1, 2, 6, 21, 112, 853, 11117, 261080, 11716571,
+                          1006700565, 164059830476, 50335907869219,
+                          29003487462848061, 31397381142761241960,
+                          63969560113225176176277,
+                          245871831682084026519528568,
+                          1787331725248899088890200576580,
+                          24636021429399867655322650759681644]
+
+    def _eval(self, n: Integer) -> Integer:
+        if self.cached:
+            return Integer(self.SEQ_TERMS[n])
+        else:
+            # Use nauty-geng to enumerate all connected graphs on n nodes
+            if n == 0:
+                return 1
+            from sage.features.nauty import NautyExecutable
+            import subprocess
+            import re
+
+            geng_path = NautyExecutable("geng").absolute_filename()
+            proc = subprocess.run(
+                f"{geng_path} {n} -c -u".split(),
+                capture_output=True
+            )
+            result = re.findall(b">Z ([0-9]+) graphs generated", proc.stderr)
+            return Integer(result[0])
+
+
+class A001358(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=1358,
+            description="Semiprimes (or biprimes): products of two primes.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = []
+        for i in count(2):
+            if sum(dict(arith.factor(i)).values()) == 2:
+                seq.append(i)
+            if len(seq) == n:
+                return [Integer(i) for i in seq]
+
+
+class A001405(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=1405,
+            description="a(n) = binomial(n, floor(n/2)).",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(arith.binomial(n, n//2))
+
+class A001462(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=1462,
+            description="Golomb's sequence: a(n) is the number of times n occurs, starting with a(1) = 1.",
+            all_at_once=True,
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        a = [None,1,2,2]; k = 3
+        while len(a) < n+1:
+            a += [k] * a[k]
+            k += 1
+        return [Integer(i) for i in a[1:n+1]]
