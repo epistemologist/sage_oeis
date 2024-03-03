@@ -2170,3 +2170,59 @@ class A003418(OEISSequence):
         from sage.arith.functions import lcm
         return Integer(1) if n == 0 else Integer(lcm(range(1, n+1)))
 
+class A003484(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=3484,
+            description="Radon function, also called Hurwitz-Radon numbers.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(8*(arith.valuation(n,2)//4)+pow(2,arith.valuation(n,2)%4))
+
+class A004011(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=4011,
+            description="Theta series of D_4 lattice; Fourier coefficients of Eisenstein series E_{gamma,2}.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(1) if n == 0 else 24*sum([d for d in arith.divisors(n) if d%2 == 1])
+
+class A004018(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=4018,
+            description="Theta series of square lattice (or number of ways of writing n as a sum of 2 squares). Often denoted by r(n) or r_2(n).",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(1) if n == 0 else Integer(
+            4*arith.prod([
+                (1+e) if (p % 4 == 1) else
+                (0 if e%2==1 else 1) if (p % 4 == 3) else 1
+                for p,e in dict(arith.factor(n)).items()
+            ])
+        )
+
+class A004526(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=4526,
+            description="Nonnegative integers repeated, floor(n/2).",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(n//2)
+    
+
+# Next seqeunce: look at this paper https://arxiv.org/pdf/1807.11602.pdf
