@@ -24,6 +24,7 @@ Sequences to implement:
  - A005470: Number of unlabeled planar simple graphs with n nodes.
  - A005588: Number of free binary trees admitting height n.
   - paper with recurrence: https://oeis.org/A005588/a005588.pdf
+ - A055512: Lattices with n labeled elements.
 """
 
 
@@ -2569,7 +2570,6 @@ class A006966(OEISSequence):
             from sage.combinat.posets.posets import FinitePosets_n
             return Integer(sum([i.is_lattice() for i in Posets(6)]))
 
-"""
 class A007318(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -2579,5 +2579,326 @@ class A007318(OEISSequence):
             description="Pascal's triangle read by rows: C(n,k) = binomial(n,k) = n!/(k!*(n-k)!), 0 <= k <= n.",
             all_at_once=True
         )
-    def _
-"""
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def _table_iterator():
+            for n_ in count():
+                for k_ in range(n_+1):
+                    yield arith.binomial(n_, k_)
+        return [Integer(i) for i in islice(_table_iterator(), n)]
+
+class A008275(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=8275,
+            description="Triangle read by rows of Stirling numbers of first kind, s(n,k), n >= 1, 1 <= k <= n.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        from sage.combinat.combinat import stirling_number1
+        def _table_iterator():
+            for n_ in count(1):
+                for k_ in range(1, n_+1):
+                    # Sequence entries are signed
+                    # See https://en.wikipedia.org/wiki/Stirling_numbers_of_the_first_kind#Signs
+                    yield pow(-1, n_-k_)*stirling_number1(n_, k_)
+        return [Integer(i) for i in islice(_table_iterator(), n)]
+
+class A008277(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=8277,
+            description="Triangle of Stirling numbers of the second kind, S2(n,k), n >= 1, 1 <= k <= n.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        from sage.combinat.combinat import stirling_number2
+        def _table_iterator():
+            for n_ in count(1):
+                for k_ in range(1, n_+1):
+                    yield stirling_number2(n_, k_)
+        return [Integer(i) for i in islice(_table_iterator(), n)]
+
+class A008279(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=8279,
+            description="Triangle T(n,k) = n!/(n-k)! (0 <= k <= n) read by rows, giving number of permutations of n things k at a time.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def _table_iterator():
+            for n_ in count():
+                for k_ in range(n_+1):
+                    yield arith.factorial(n_) // arith.factorial(n_-k_)
+        return [Integer(i) for i in islice(_table_iterator(), n)]
+
+class A008292(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=8279,
+            description="Triangle of Eulerian numbers T(n,k) (n >= 1, 1 <= k <= n) read by rows.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def _table_iterator():
+            from sage.combinat.combinat import eulerian_number
+            for n_ in count(1):
+                for k_ in range(1, n_+1):
+                    yield 1 if n_ == k_ else eulerian_number(n_, k_)
+        return [1] + [Integer(i) for i in islice(_table_iterator(), n-1)]
+
+class A008683(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=8683,
+            description="Möbius (or Moebius) function mu(n). mu(1) = 1; mu(n) = (-1)^k if n is the product of k different primes; otherwise mu(n) = 0.",
+            all_at_once=False
+        )
+
+    def _eval(self, n: Integer) -> Integer:
+        return arith.moebius(n)
+
+class A010060(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=10060,
+            description="Thue-Morse sequence: let A_k denote the first 2^k terms; then A_0 = 0 and for k >= 0, A_{k+1} = A_k B_k, where B_k is obtained from A_k by interchanging 0's and 1's.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(n).popcount() % 2
+
+class A018252(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=18252,
+            description="The nonprime numbers: 1 together with the composite numbers, A002808.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = [1]
+        for i in count(2):
+            if not arith.is_prime(i):
+                seq.append(i)
+            if len(seq) == n:
+                return [Integer(i) for i in seq]
+                
+
+class A020639(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=20639,
+            description="Lpf(n): least prime dividing n (when n > 1); a(1) = 1. Or, smallest prime factor of n, or smallest prime divisor of n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(1) if n == 1 else Integer(min(arith.prime_divisors(n)))
+
+class A020652(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=20652,
+            description="Numerators in canonical bijection from positive integers to positive rationals.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        # Code from OEIS page
+        # Original author: Indranil Ghosh
+        s,k = 0,2
+        while s < n: 
+            s += arith.euler_phi(k)
+            k += 1
+        s -= arith.euler_phi(k-1)
+        j = 1
+        while s < n:
+            if arith.gcd(j, k-1) == 1: s += 1
+            j += 1
+        return Integer(j-1)
+
+class A020653(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=20653,
+            description="Denominators in a certain bijection from positive integers to positive rationals.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        # Code from OEIS page
+        # Original author: Indranil Ghosh
+        s,k = 0,2
+        while s < n: 
+            s += arith.euler_phi(k)
+            k += 1
+        s -= arith.euler_phi(k-1)
+        j = 1
+        while s < n:
+            if arith.gcd(j, k-1) == 1: s += 1
+            j += 1
+        return Integer(k-j)
+
+class A025487(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=25487,
+            description="Least integer of each prime signature A124832; also products of primorial numbers A002110.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def _is_ok(k):
+            exponents = [ arith.valuation(k, p) for p in arith.primes(max(arith.prime_divisors(k))+1) ]
+            return list(sorted(exponents)) == list(reversed(exponents))
+        seq = [1]
+        for i in count(2):
+            if _is_ok(i):
+                seq.append(i)
+            if len(seq) == n:
+                return [Integer(i) for i in seq]
+
+class A027641(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=27641,
+            description="Numerator of Bernoulli number B_n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(arith.bernoulli(n).numerator())
+    
+class A027642(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=27642,
+            description="Denominator of Bernoulli number B_n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(arith.bernoulli(n).denominator())
+    
+class A035099(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=-1,
+            seq_number=35099,
+            description="McKay-Thompson series of class 2B for the Monster group with a(0) = 40.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # Translation of Mathematica code by Jean-François Alcover
+        from sage.all import PowerSeriesRing, ZZ
+        R = PowerSeriesRing(ZZ,default_prec=100,sparse=True,names=('x',))
+        (x,) = R.gens()
+
+        out = 1/x
+        for k in range(1, n+1):
+            out *= 1+x**k
+        out = pow(out, -24)
+
+        seq = out.coefficients()
+        seq[1] = 40
+        return [Integer(i) for i in seq[:n]]
+
+class A038566(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=38566,
+            description="Numerators in canonical bijection from positive integers to positive rationals <= 1: arrange fractions by increasing denominator then by increasing numerator.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def gen_seq():
+            yield 1
+            for i in count(2):
+                for j in range(1, i+1):
+                    if arith.gcd(i,j) == 1: yield j
+        return [Integer(i) for i in islice(gen_seq(), n)]
+    
+class A038567(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=38567,
+            description="Denominators in canonical bijection from positive integers to positive rationals <= 1.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        totient_sums = [0]
+        seq = [None for _ in range(n)]
+        for k in count(1):
+            totient_sums.append(totient_sums[-1] + arith.euler_phi(k))
+            for j in range(totient_sums[k-1], min(n, totient_sums[k])):
+                seq[j] = k
+            if totient_sums[-1] > n: break
+        return [Integer(i) for i in seq]
+    
+class A038568(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=38568,
+            description="Numerators in canonical bijection from positive integers to positive rationals.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        # Translation of the PARI/GP program
+        # The rest of the programs seem to give wrong values?
+        for q in count(1):
+            e = arith.euler_phi(q)
+            if n+1 < 2*e:
+                for p in count(1):
+                    if arith.gcd(p, q) == 1:
+                        if n <= 0: return Integer([q, p][n])
+                        else: n -= 2
+            n -= 2*e
+    
+class A049310(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=49310,
+            description="Triangle of coefficients of Chebyshev's S(n,x) := U(n,x/2) polynomials (exponents in increasing order).",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        # {T(n, k) = if( k<0 || k>n || (n + k)%2, 0, (-1)^((n + k)/2 + k) * binomial((n + k)/2, k))}
+        T = lambda n, k: 0 if (k < 0 or k > n or (n+k)%2 == 1) else pow(-1, (n+k)//2+k)*arith.binomial((n+k)//2, k)
+        def _table_iterator():
+            for n_ in count():
+                for k_ in range(n_+1):
+                    yield T(n_, k_)
+        return [Integer(i) for i in islice(_table_iterator(),n)]
+
