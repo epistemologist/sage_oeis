@@ -25,6 +25,7 @@ Sequences to implement:
  - A005588: Number of free binary trees admitting height n.
   - paper with recurrence: https://oeis.org/A005588/a005588.pdf
  - A055512: Lattices with n labeled elements.
+ - A104725: Number of complementing systems of subsets of {0, 1, ..., n-1}. 
 """
 
 
@@ -862,7 +863,7 @@ class A000244(OEISSequence):
         OEISSequence.__init__(
             self,
             offset=0,
-            seq_number=225,
+            seq_number=244,
             description="Powers of 3: a(n) = 3^n.",
             all_at_once=False
         )
@@ -1627,7 +1628,7 @@ class A001349(OEISSequence):
             self,
             offset=0,
             seq_number=1349,
-            description="Number of connected graphs on n nodes.",
+            description="Number of connected graphs with n nodes.",
             all_at_once=False
         )
         self.cached = cached
@@ -1779,7 +1780,7 @@ class A001511(OEISSequence):
             self,
             offset=1,
             seq_number=1511,
-            description="The ruler function: exponent of the highest power of 2 dividing 2n. Equivalently, the 2-adic valuation of 2n.",
+            description='The ruler function: exponent of the highest power of 2 dividing 2n. Equivalently,  the 2-adic valuation of 2n.',
             all_at_once=False
         )
 
@@ -2358,7 +2359,7 @@ class A005100(OEISSequence):
         OEISSequence.__init__(
             self,
             offset=1,
-            seq_number=5101,
+            seq_number=5100,
             description="Deficient numbers: numbers k such that sigma(k) < 2k.",
             all_at_once=True
         )
@@ -2396,7 +2397,7 @@ class A005117(OEISSequence):
         OEISSequence.__init__(
             self,
             offset=1,
-            seq_number=5101,
+            seq_number=5117,
             description="Squarefree numbers: numbers that are not divisible by a square greater than 1.",
             all_at_once=True
         )
@@ -2643,7 +2644,7 @@ class A008292(OEISSequence):
         OEISSequence.__init__(
             self,
             offset=0,
-            seq_number=8279,
+            seq_number=8292,
             description="Triangle of Eulerian numbers T(n,k) (n >= 1, 1 <= k <= n) read by rows.",
             all_at_once=True
         )
@@ -2902,3 +2903,45 @@ class A049310(OEISSequence):
                     yield T(n_, k_)
         return [Integer(i) for i in islice(_table_iterator(),n)]
 
+class A070939(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=70939,
+            description="Length of binary representation of n.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        return Integer(1) if n == 0 else Integer(n).bit_length()
+
+class A074206(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=74206,
+            description="Kalmár's [Kalmar's] problem: number of ordered factorizations of n.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = [0,1] + [None] * (n-2)
+        for k in range(2, n):
+            seq[k] = sum([seq[d] for d in arith.divisors(k) if d != k])
+        return [Integer(i) for i in seq]
+
+class A217831(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=217831,
+            description="Euclid's triangle read by rows. T(n, k) = 1 if k is prime to n, otherwise 0.",
+            all_at_once=True
+        )
+    def _eval_up_to_n(self, n: Integer) -> List:
+        def _table_iterator():
+            for n_ in count():
+                for k_ in range(n_+1):
+                    yield 1 if arith.gcd(n_, k_) == 1 else 0
+        return [Integer(i) for i in islice(_table_iterator(), n)]
