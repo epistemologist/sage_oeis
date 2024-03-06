@@ -12,7 +12,7 @@ from typing import List
 from itertools import islice, count
 
 """
-Sequences to implement:
+Core sequences to implement:
  - A000014: Number of series-reduced trees with n nodes.
  - A000105: Number of free polyominoes (or square animals) with n cells.
  - A000109: Number of simplicial polyhedra with n vertices; simple planar graphs with n vertices and 3n-6 edges; maximal simple planar graphs with n vertices; planar triangulations with n vertices; triangulations of the sphere with n vertices; 3-connected cubic planar graphs on 2n-4 vertices.
@@ -2885,6 +2885,27 @@ class A038568(OEISSequence):
                         else: n -= 2
             n -= 2*e
     
+class A038569(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=0,
+            seq_number=38569,
+            description="Denominators in a certain bijection from positive integers to positive rationals.",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        # Translation of Python code from Indranil Ghosh
+        s,k = 1,2
+        while s <= n:
+            s += 2*arith.euler_phi(k); k += 1
+        s -= 2*arith.euler_phi(k-1)
+        j = 1
+        while s <= n:
+            if arith.gcd(j, k-1) == 1: s += 2
+            j += 1
+        return Integer(k-1) if s > n+1 else Integer(j-1)
+    
 class A049310(OEISSequence):
     def __init__(self):
         OEISSequence.__init__(
@@ -2945,3 +2966,38 @@ class A217831(OEISSequence):
                 for k_ in range(n_+1):
                     yield 1 if arith.gcd(n_, k_) == 1 else 0
         return [Integer(i) for i in islice(_table_iterator(), n)]
+
+class A226898(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=226898,
+            description="Hooley's Delta function: maximum number of divisors of n in [u, eu] for all u. (Here e is Euler's number 2.718... = A001113.)",
+            all_at_once=False
+        )
+    def _eval(self, n: Integer) -> Integer:
+        from math import exp
+        d = arith.divisors(n); m = 1
+        for i in range(len(d)):
+            t = exp(1)*d[i]
+            m = max(sum([int(d[j] < t) for j in range(i, len(d))]), m)
+        return Integer(m)
+
+class A246655(OEISSequence):
+    def __init__(self):
+        OEISSequence.__init__(
+            self,
+            offset=1,
+            seq_number=246655,
+            description="Prime powers: numbers of the form p^k where p is a prime and k >= 1.",
+            all_at_once=True
+        )
+
+    def _eval_up_to_n(self, n: Integer) -> List:
+        seq = []
+        for i in count(2):
+            if arith.is_prime_power(i):
+                seq.append(i)
+            if len(seq) == n:
+                return [Integer(i) for i in seq]
